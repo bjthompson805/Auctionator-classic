@@ -111,10 +111,10 @@ function Atr_FullScanFrameIdle()
 
   if (gAtr_FullScanState == ATR_FS_NULL) then
 
-    gDoSlowScan = IsControlKeyDown()
+    gDoSlowScan = true;
 
     if (gDoSlowScan) then
-      Atr_FullScanStartButton:SetText (ZT("Slow scan"));
+      Atr_FullScanStartButton:SetText (ZT("Start Scanning"));
       Atr_FullScanStartButton:Enable();
     else
       Atr_FullScanStartButton:SetText (ZT("Start Scanning"));
