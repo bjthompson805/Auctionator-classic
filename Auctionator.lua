@@ -18,23 +18,19 @@ gAtrZC = addonTable.zc;   -- share with AuctionatorDev
 local recommendElements     = {};
 
 AUCTIONATOR_ENABLE_ALT    = 1;
-AUCTIONATOR_AUTOCOMPLETE = 1;
 AUCTIONATOR_SHOW_ST_PRICE = 0;
 AUCTIONATOR_SHOW_TIPS   = 1;
 AUCTIONATOR_DEF_DURATION  = "N";    -- none
 AUCTIONATOR_V_TIPS      = 1;
 AUCTIONATOR_A_TIPS      = 1;
-AUCTIONATOR_A_WEEK_TIPS      = 0;
-AUCTIONATOR_A_MONTH_TIPS      = 0;
 AUCTIONATOR_D_TIPS      = 1;
 AUCTIONATOR_SHIFT_TIPS    = 1;
 AUCTIONATOR_DE_DETAILS_TIPS = 4;    -- off by default
 AUCTIONATOR_DEFTAB      = 1;
-AUCTIONATOR_R_TIPS      = 1;
 
 AUCTIONATOR_DB_MAXITEM_AGE  = 180;
 AUCTIONATOR_DB_MAXHIST_AGE  = 21;   -- obsolete - just needed for migration
-AUCTIONATOR_DB_MAXHIST_DAYS = 28;
+AUCTIONATOR_DB_MAXHIST_DAYS = 5;
 
 AUCTIONATOR_OPEN_FIRST    = 0;  -- obsolete - just needed for migration
 AUCTIONATOR_OPEN_BUY    = 0;  -- obsolete - just needed for migration
@@ -276,13 +272,7 @@ end
 
 local function IsCataEnchanter()
   Auctionator.Debug.Message( 'IsCataEnchanter' )
---[[
-  local prof1, prof2 = GetProfessions()
 
-  if (IsCataEnchanting (prof1) or IsCataEnchanting (prof2)) then
-    return true
-  end
-]]--
   return false
 end
 
@@ -638,20 +628,19 @@ local function Atr_OnClickTradeSkillBut()
 
   Atr_SelectPane (BUY_TAB);
 
-  local index = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
+  local index = GetTradeSkillSelectionIndex()
 
-
-  local link = C_TradeSkillUI.GetRecipeItemLink(index)
+  local link = GetTradeSkillItemLink(index)
 
   local _, _, _, _, _, itemType = GetItemInfo (link);
 
-  local numReagents = C_TradeSkillUI.GetRecipeNumReagents(index)
+  local numReagents = GetTradeSkillNumReagents(index)
 
   local reagentId
 
   local shoppingListName = GetItemInfo (link)
   if (shoppingListName == nil) then
-    shoppingListName = C_TradeSkillUI.GetRecipeInfo(index).name
+    shoppingListName = GetTradeSkillLine()
   end
 
   local items = {}
@@ -661,7 +650,7 @@ local function Atr_OnClickTradeSkillBut()
   end
 
   for reagentId = 1, numReagents do
-    local reagentName = C_TradeSkillUI.GetRecipeReagentInfo(index, reagentId)
+    local reagentName = GetTradeSkillReagentInfo(index, reagentId)
     if (reagentName and not zc.StringSame(reagentName, "Crystal Vial")) then
       table.insert (items, reagentName)
     end
@@ -678,12 +667,12 @@ local function Atr_ModTradeSkillFrame()
   if (gTradeSkillFrameModded) then
     return
   end
---[[
+
   if (TradeSkillFrame) then
     gTradeSkillFrameModded = true
 
     local button = CreateFrame("BUTTON", "Auctionator_Search", TradeSkillFrame, "UIPanelButtonTemplate");
-    button:SetPoint("RIGHT", "TradeSkillFrame", "RIGHT", -65, -20);
+    button:SetPoint("TOPRIGHT", "TradeSkillDetailScrollFrame", "TOPRIGHT", 0, -22);
 
     button:SetHeight (20)
     button:SetText(ZT("AH"))
@@ -695,7 +684,7 @@ local function Atr_ModTradeSkillFrame()
   else
     zz ("TradeSkillFrame not loaded")
   end
-]]--
+
 
 
 end
@@ -828,7 +817,7 @@ function Atr_OnLoad()
     Atr_StackingPrefs_Init();
   end
 
-  if (AUCTIONATOR_SAVEDVARS == nil) then
+  if (AUCTIONATOR_SAVEDVARS == nil) or Atr_IsAnyMissingSavedVars() then
     Atr_ResetSavedVars()
   end
 
@@ -1246,6 +1235,15 @@ end
 
 -----------------------------------------
 
+function Atr_IsAnyMissingSavedVars ()
+  for key, value in pairs(auctionator_savedvars_defaults) do
+    if AUCTIONATOR_SAVEDVARS[key] == nil then
+      return true
+    end
+  end
+  return false
+end
+
 function Atr_ResetSavedVars ()
   Auctionator.Debug.Message( 'Atr_ResetSavedVars' )
 
@@ -1514,7 +1512,7 @@ local function Atr_LoadContainerItemToSellPane(slot)
     gAutoSingleton = time();
   end
 
-  PickupContainerItem(bagID, slotID);
+  C_Container.PickupContainerItem(bagID, slotID);
 
   local infoType = GetCursorInfo()
 
@@ -1576,6 +1574,7 @@ function Atr_CreateAuction_OnClick ()
   else
     gJustPosted.StackSize     = Atr_StackSize();
     gJustPosted.NumStacks     = Atr_Batch_NumAuctions:GetNumber();
+    gJustPosted.NumStacks     = 0; -- gepy
   end
 
   local duration        = UIDropDownMenu_GetSelectedValue(Atr_Duration);
@@ -1859,7 +1858,7 @@ function Atr_AddMainPanel ()
   local frame = CreateFrame("FRAME", "Atr_Main_Panel", AuctionFrame, "Atr_Sell_Template");
   frame:Hide();
 
-  UIDropDownMenu_SetWidth (Atr_Duration, 75);
+  UIDropDownMenu_SetWidth (Atr_Duration, 55);
 
 end
 
@@ -1997,6 +1996,7 @@ function Atr_OnSearchComplete()
           gCurrentPane.histIndex = 1;
         end
       end
+
     end
 
     if (Atr_IsSelectedTab_Current()) then
@@ -2401,7 +2401,7 @@ function Atr_UpdateRecommendation (updatePrices)
   local basedata;
 
   if (Atr_ShowingSearchSummary()) then
-    --useless?
+
   elseif (Atr_IsSelectedTab_Current()) then
 
     if (gCurrentPane:GetProcessingState() ~= Auctionator.Constants.SearchStates.NULL) then
@@ -2646,7 +2646,7 @@ function Atr_ShowRecTooltip ()
 
   if (link) then
     if (num < 1) then num = 1; end;
---[[
+
     if (zc.IsBattlePetLink (link)) then
       local speciesID, level, breedQuality, maxHealth, power, speed, battlePetID, name = zc.ParseBattlePetLink(link)
 
@@ -2655,12 +2655,13 @@ function Atr_ShowRecTooltip ()
       BattlePetTooltip:ClearAllPoints();
       BattlePetTooltip:SetPoint("BOTTOMLEFT", Atr_RecommendItem_Tex, "BOTTOMRIGHT", 10, 0)
 
-    else ]]--
+    else
       GameTooltip:SetOwner(Atr_RecommendItem_Tex, "ANCHOR_RIGHT");
       GameTooltip:SetHyperlink (link, num);
       gCurrentPane.tooltipvisible = true;
-    --end
+    end
   end
+
 end
 
 -----------------------------------------
@@ -2975,6 +2976,7 @@ function Atr_UpdateUI ()
     end
 
     if (Atr_IsModeCreateAuction()) then
+
       Atr_UpdateRecommendation (false);
     else
       Atr_HideElems (recommendElements);
@@ -3395,6 +3397,7 @@ function Atr_ShowingSearchSummary ()
   Auctionator.Debug.Message( 'Atr_ShowingSearchSummary' )
 
   if (gCurrentPane.activeSearch and gCurrentPane.activeSearch.searchText ~= "" and gCurrentPane:IsScanNil() and gCurrentPane.activeSearch:NumScans() > 0) then
+
     return true;
   end
 
@@ -3470,7 +3473,7 @@ function Atr_ShowLineTooltip (self)
   Auctionator.Debug.Message( 'Atr_ShowLineTooltip', self )
 
   local itemLink = self.itemLink;
---[[
+
   if (zc.IsBattlePetLink (itemLink)) then
 
     local speciesID, level, breedQuality, maxHealth, power, speed, battlePetID, name = zc.ParseBattlePetLink(itemLink)
@@ -3481,7 +3484,7 @@ function Atr_ShowLineTooltip (self)
     BattlePetTooltip:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 10, 0)
 
   else   -- normal case
---]]
+
     local fname = self:GetName()
     local ftname = fname.."_EntryText"
     local textPart = _G[ftname]
@@ -3490,7 +3493,7 @@ function Atr_ShowLineTooltip (self)
       GameTooltip:SetOwner(self, "ANCHOR_RIGHT", -280)
       GameTooltip:SetHyperlink (itemLink, 1)
     end
- -- end
+  end
 end
 
 
@@ -3602,20 +3605,17 @@ function Atr_ShowSearchSummary()
       local data = scn.absoluteBest;
 
       local lineEntry_item_tag = "AuctionatorEntry"..line.."_PerItem_Price";
-      local lineEntry_stack_tag = "AuctionatorEntry"..line.."_Stack_Price";
-      local lineEntry_item    = _G[lineEntry_item_tag];
-      local lineEntry_stack    = _G[lineEntry_stack_tag];
 
+      local lineEntry_item    = _G[lineEntry_item_tag];
       local lineEntry_itemtext  = _G["AuctionatorEntry"..line.."_PerItem_Text"];
       local lineEntry_text    = _G["AuctionatorEntry"..line.."_EntryText"];
-      local lineEntry_stacktext   = _G["AuctionatorEntry"..line.."_Stack_Text"];
+      local lineEntry_stack   = _G["AuctionatorEntry"..line.."_StackPrice"];
 
       lineEntry_itemtext:SetText  ("");
       lineEntry_text:SetText  ("");
-      lineEntry_stacktext:SetText ("");
-      lineEntry_stack:Hide();
+      lineEntry_stack:SetText ("");
 
-      --lineEntry_text:GetParent():SetPoint ("LEFT", 157, 0);
+      lineEntry_text:GetParent():SetPoint ("LEFT", 157, 0);
 
       Atr_SetMFcolor (lineEntry_item_tag);
 
@@ -3628,7 +3628,7 @@ function Atr_ShowSearchSummary()
       local b = scn.itemTextColor[3]
 
       lineEntry_text:SetTextColor (r, g, b)
-      lineEntry_stacktext:SetTextColor (1, 1, 1)
+      lineEntry_stack:SetTextColor (1, 1, 1)
 
       -- Auctionator.Util.Print( scn, "Atr_ShowSearchSummary Scan" )
       local icon = Atr_GetUCIcon( scn.itemLink )
@@ -3645,12 +3645,11 @@ function Atr_ShowSearchSummary()
         end
 
         lineEntry_text:SetText (icon.."  "..scn.itemName..iLevelStr)
-        lineEntry_stacktext:SetText (scn:GetNumAvailable().." "..ZT("available"))
+        lineEntry_stack:SetText (scn:GetNumAvailable().." "..ZT("available"))
       end
 
       if (data == nil or scn.sortedData == nil or #scn.sortedData == 0) then
         lineEntry_item:Hide();
-
         lineEntry_itemtext:Show();
         if (scn.sortedData and #scn.sortedData == 0) then
           lineEntry_itemtext:SetText (ZT("none available"));
@@ -3732,26 +3731,24 @@ function Atr_ShowCurrentAuctions()
       local data = scn.sortedData[dataOffset];
 
       local lineEntry_item_tag = "AuctionatorEntry"..line.."_PerItem_Price";
-      local lineEntry_stack_tag = "AuctionatorEntry"..line.."_Stack_Price";
-      local lineEntry_item    = _G[lineEntry_item_tag];
-      local lineEntry_stack    = _G[lineEntry_stack_tag];
 
+      local lineEntry_item    = _G[lineEntry_item_tag];
       local lineEntry_itemtext  = _G["AuctionatorEntry"..line.."_PerItem_Text"];
       local lineEntry_text    = _G["AuctionatorEntry"..line.."_EntryText"];
-      local lineEntry_stacktext   = _G["AuctionatorEntry"..line.."_Stack_Text"];
+      local lineEntry_stack   = _G["AuctionatorEntry"..line.."_StackPrice"];
 
       lineEntry_itemtext:SetText  ("");
       lineEntry_text:SetText  ("");
-      lineEntry_stacktext:SetText ("");
+      lineEntry_stack:SetText ("");
 
-      --lineEntry_text:GetParent():SetPoint ("LEFT", 172, 0);
+      lineEntry_text:GetParent():SetPoint ("LEFT", 172, 0);
 
       Atr_SetMFcolor (lineEntry_item_tag);
-      Atr_SetMFcolor (lineEntry_stack_tag);
 
       local entrytext = "";
 
       if (data.type == "n") then
+
         lineEntry:Show();
 
         if (data.count == 1) then
@@ -3776,21 +3773,16 @@ function Atr_ShowCurrentAuctions()
 
         if (data.buyoutPrice == 0) then
           lineEntry_item:Hide();
-          lineEntry_stack:Hide();
-
           lineEntry_itemtext:Show();
           lineEntry_itemtext:SetText (ZT("no buyout price"));
-          lineEntry_stacktext:SetText("")
         else
           lineEntry_item:Show();
-          --lineEntry_itemtext:Hide();
-          MoneyFrame_Update ( lineEntry_item_tag, zc.round(data.buyoutPrice/data.stackSize) );
+          lineEntry_itemtext:Hide();
+          MoneyFrame_Update (lineEntry_item_tag, zc.round(data.buyoutPrice/data.stackSize) );
 
           if (data.stackSize > 1) then
-            lineEntry_stack:Show();
-            MoneyFrame_Update (lineEntry_stack_tag, data.buyoutPrice );
-          else
-            lineEntry_stack:Hide();
+            lineEntry_stack:SetText (zc.priceToString(data.buyoutPrice));
+            lineEntry_stack:SetTextColor (0.6, 0.6, 0.6);
           end
         end
 
@@ -3877,21 +3869,18 @@ function Atr_ShowHistory (showPosts)
       local data = gCurrentPane.sortedHist[dataOffset];
 
       local lineEntry_item_tag = "AuctionatorEntry"..line.."_PerItem_Price";
-      local lineEntry_stack_tag = "AuctionatorEntry"..line.."_Stack_Price";
-      local lineEntry_item    = _G[lineEntry_item_tag];
-      local lineEntry_stack    = _G[lineEntry_stack_tag];
 
+      local lineEntry_item    = _G[lineEntry_item_tag];
       local lineEntry_itemtext  = _G["AuctionatorEntry"..line.."_PerItem_Text"];
       local lineEntry_text    = _G["AuctionatorEntry"..line.."_EntryText"];
-      local lineEntry_stacktext   = _G["AuctionatorEntry"..line.."_Stack_Text"];
+      local lineEntry_stack   = _G["AuctionatorEntry"..line.."_StackPrice"];
 
-      --lineEntry_text:GetParent():SetPoint ("LEFT", 172, 0);
+      lineEntry_text:GetParent():SetPoint ("LEFT", 172, 0);
 
       lineEntry_item:Show();
       lineEntry_itemtext:Hide();
 
-      lineEntry_stacktext:SetText ("");
-      lineEntry_stack:Hide();
+      lineEntry_stack:SetText ("");
 
       Atr_SetMFcolor (lineEntry_item_tag);
 
@@ -4058,16 +4047,16 @@ function Atr_GetNumItemInBags (targItemLink)
   for b = 1, #kBagIDs do
     bagID = kBagIDs[b];
 
-    numslots = GetContainerNumSlots (bagID);
+    numslots = C_Container.GetContainerNumSlots (bagID);
     for slotID = 1,numslots do
-      local itemLink = GetContainerItemLink(bagID, slotID);
+      local itemLink = C_Container.GetContainerItemLink(bagID, slotID);
       if (itemLink) then
         local itemName, isBattlePet = zc.ItemNamefromLink (itemLink)
 
         if (itemName == targItemName and isBattlePet == targIsBattlePet) then
 
-          local _, itemCount  = GetContainerItemInfo(bagID, slotID)
-          numItems = numItems + itemCount;
+          local _, itemCount  = C_Container.GetContainerItemInfo(bagID, slotID)
+          if itemCount then numItems = numItems + itemCount; end
         end
       end
     end
@@ -4420,7 +4409,7 @@ function Atr_SetInitialStacking (numStacks, stackSize)
   gInitial_NumStacks = numStacks;
   gInitial_StackSize = stackSize;
 
-  Atr_Batch_NumAuctions:SetText (numStacks);
+  Atr_Batch_NumAuctions:SetText (0); -- gepy
   Atr_SetStackSize (stackSize);
 end
 
@@ -4484,12 +4473,18 @@ end
 
 function Atr_Duration_Initialize(self)
   Auctionator.Debug.Message( 'Atr_Duration_Initialize', self )
-
-	-- DaMaGepy fix
-  --Atr_Dropdown_AddPick (self, AUCTION_DURATION_ONE, 1, Atr_Duration_OnClick);
-  Atr_Dropdown_AddPick (self, "12 Hours", 1, Atr_Duration_OnClick);
-  Atr_Dropdown_AddPick (self, "24 Hours", 2, Atr_Duration_OnClick);
-  Atr_Dropdown_AddPick (self, "48 Hours", 3, Atr_Duration_OnClick);
+  if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then -- DaMaGepy: 2=classic/era  5=TBC
+	AUCTION_DURATION_ONE = 2
+	AUCTION_DURATION_TWO = 8
+	AUCTION_DURATION_THREE = 24
+  else
+	AUCTION_DURATION_ONE = 12
+	AUCTION_DURATION_TWO = 24
+	AUCTION_DURATION_THREE = 48
+  end
+  Atr_Dropdown_AddPick (self, AUCTION_DURATION_ONE, 1, Atr_Duration_OnClick);
+  Atr_Dropdown_AddPick (self, AUCTION_DURATION_TWO, 2, Atr_Duration_OnClick);
+  Atr_Dropdown_AddPick (self, AUCTION_DURATION_THREE, 3, Atr_Duration_OnClick);
 
 end
 
@@ -5046,26 +5041,30 @@ end
 function Atr_Item_Autocomplete(self)
   Auctionator.Debug.Message( 'Atr_Item_Autocomplete', self )
 
-  --if autocomplete option is disabled then exit
-  if AUCTIONATOR_AUTOCOMPLETE == 0 then return end
-
-  --make sure text is valid
   local text = self:GetText();
-  if type(text) ~= "string" then return end;
   local textlen = strlen(text);
+  local name;
 
   -- first search shopping lists
+
   local numLists = #AUCTIONATOR_SHOPPING_LISTS;
+  local n;
+
   for n = 1,numLists do
     local slist = AUCTIONATOR_SHOPPING_LISTS[n];
+
     local numItems = #slist.items;
 
     if ( numItems > 0 ) then
       for i=1, numItems do
-        local name = slist.items[i];
+        name = slist.items[i];
         if ( name and text and (strfind(strupper(name), strupper(text), 1, 1) == 1) ) then
           self:SetText(name);
-          self:HighlightText(textlen, -1);
+          if ( self:IsInIMECompositionMode() ) then
+            self:HighlightText(textlen - strlen(arg1), -1);
+          else
+            self:HighlightText(textlen, -1);
+          end
           return;
         end
       end
@@ -5073,13 +5072,19 @@ function Atr_Item_Autocomplete(self)
   end
 
   -- next search posted DB
-  if ( #gHistoryItemList > 0 ) then
-    local numItems = #gHistoryItemList
+
+  numItems = #gHistoryItemList;
+
+  if ( numItems > 0 ) then
     for i=1, numItems do
-      local name = gHistoryItemList[i].name;
+      name = gHistoryItemList[i].name;
       if ( name and text and (strfind(strupper(name), strupper(text), 1, 1) == 1) ) then
         self:SetText(name);
-        self:HighlightText(textlen, -1);
+        if ( self:IsInIMECompositionMode() ) then
+          self:HighlightText(textlen - strlen(arg1), -1);
+        else
+          self:HighlightText(textlen, -1);
+        end
         return;
       end
     end
@@ -5141,16 +5146,17 @@ end
 
 function Atr_CalcStartPrice (buyoutPrice)
   Auctionator.Debug.Message( 'Atr_CalcStartPrice', buyoutPrice )
-  --default no calculations
-  local ret = buyoutPrice
 
-  -- if we have a starting discount then - starting%
-  if (AUCTIONATOR_SAVEDVARS.STARTING_DISCOUNT ~= nil and AUCTIONATOR_SAVEDVARS.STARTING_DISCOUNT > 0) then
-    local discount = 1.00 - (AUCTIONATOR_SAVEDVARS.STARTING_DISCOUNT / 100);
-    ret = math.floor(buyoutPrice * discount);
+  local discount = 1.00 - (AUCTIONATOR_SAVEDVARS.STARTING_DISCOUNT / 100);
+
+  local newStartPrice = math.floor(buyoutPrice * discount);
+
+  if (AUCTIONATOR_SAVEDVARS.STARTING_DISCOUNT == 0) then    -- zero means zero
+    newStartPrice = buyoutPrice;
   end
 
-  return ret;
+  return newStartPrice;
+
 end
 
 -----------------------------------------
@@ -5159,6 +5165,7 @@ function Atr_AbbrevItemName (itemName)
   Auctionator.Debug.Message( 'Atr_AbbrevItemName', itemName )
 
   return string.gsub (itemName, "Scroll of Enchant", "SoE");
+
 end
 
 -----------------------------------------
@@ -5185,6 +5192,8 @@ function Atr_Error_Display (errmsg)
   end
 end
 
+
+
 -----------------------------------------
 -- roundPriceDown - rounds a price down to the next lowest multiple of a.
 --          - if the result is not at least a/2 lower, rounds down by a/2.
@@ -5197,8 +5206,7 @@ end
 function roundPriceDown (price, a)
   Auctionator.Debug.Message( 'roundPriceDown', price, a )
 
-  --if a is not valid for rounding return the price
-  if (a == nil or a == 0) then
+  if (a == 0) then
     return price;
   end
 
@@ -5213,6 +5221,7 @@ function roundPriceDown (price, a)
   end
 
   return newprice;
+
 end
 
 -----------------------------------------
@@ -5221,6 +5230,7 @@ function ToTightHour(t)
   Auctionator.Debug.Message( 'ToTightHour', t )
 
   return floor((t - gTimeTightZero)/3600);
+
 end
 
 -----------------------------------------
@@ -5229,6 +5239,7 @@ function FromTightHour(tt)
   Auctionator.Debug.Message( 'FromTightHour', tt )
 
   return (tt*3600) + gTimeTightZero;
+
 end
 
 
@@ -5238,6 +5249,7 @@ function ToTightTime(t)
   Auctionator.Debug.Message( 'ToTightTime', t )
 
   return floor((t - gTimeTightZero)/60);
+
 end
 
 -----------------------------------------
@@ -5246,5 +5258,6 @@ function FromTightTime(tt)
   Auctionator.Debug.Message( 'FromTightTime', tt )
 
   return (tt*60) + gTimeTightZero;
+
 end
 

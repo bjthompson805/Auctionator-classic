@@ -1,4 +1,4 @@
-﻿function AtrBuildLTable_deDE ()
+function AtrBuildLTable_deDE ()
 
 -- Translated by ckaotik
 

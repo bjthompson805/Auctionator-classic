@@ -68,23 +68,15 @@
 
   <!-- Template for auctionator options panels -->
   <Frame name="Atr_OptionsPanelTemplate" virtual="true" inherits="BackdropTemplate">
-    <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" tile="true">
-      <BackgroundInsets>
-        <AbsInset bottom="5" left="5" right="5" top="5"/>
-      </BackgroundInsets>
-      <TileSize>
-        <AbsValue val="32"/>
-      </TileSize>
-    </Backdrop>
     <Scripts>
-      <OnShow>
+      <OnLoad>
         self:SetBackdrop({
-          bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
+          bgFile = "Interface\\CharacterFrame\\UI-Party-Background",
           tile = true,
           tileSize = 32,
-          insets = { left = 5, right = 5, top = 5, bottom = 5, },
+          insets = {buttom = 5, left = 5, right = 5, top = 5},
         })
-      </OnShow>
+      </OnLoad>
     </Scripts>
     <Layers>
       <Layer level="BACKGROUND">
@@ -107,7 +99,7 @@
     </Layers>
   </Frame>
   <!-- The Mask for the interface options frame -->
-  <Frame enableMouse="true" name="Atr_Mask_StdOptionsTempl" parent="InterfaceOptionsFrame" virtual="true">
+  <Frame enableMouse="true" name="Atr_Mask_StdOptionsTempl" parent="InterfaceOptionsFrame" virtual="true" inherits="BackdropTemplate">
     <Anchors>
       <Anchor point="TOPLEFT">
         <Offset>
@@ -120,22 +112,15 @@
         </Offset>
       </Anchor>
     </Anchors>
-    <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" tile="true">
-      <TileSize>
-        <AbsValue val="16"/>
-      </TileSize>
-    </Backdrop>
     <Scripts>
       <OnLoad>
-        self:SetBackdropColor(0.2, 0.2, 0.2);
-      </OnLoad>
-      <OnShow>
         self:SetBackdrop({
-          bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", 
+          bgFile="Interface\\Tooltips\\UI-Tooltip-Background",
           tile = true,
           tileSize = 16,
         })
-      </OnShow>
+        self:SetBackdropColor(0.2, 0.2, 0.2);
+      </OnLoad>
     </Scripts>
   </Frame>
   <!-- The Basic Options panel -->
@@ -156,20 +141,6 @@
         </Anchors>
         <Scripts>
           <OnLoad>AuctionatorOption_Enable_Alt_CB_Text:SetText (gAtr_ZT("Enable alt-key shortcut"));  </OnLoad>
-        </Scripts>
-      </Frame>
-
-      <Frame inherits="Atr_SingleOptionTemplate" name="AuctionatorOption_Enable_Autocomplete">
-        <Anchors>
-          <Anchor point="TOP">
-            <Offset>
-              <AbsDimension y="-110"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <!-- need translations -->
-          <OnLoad>AuctionatorOption_Enable_Autocomplete_CB_Text:SetText ("Enable AutoComplete");  </OnLoad>
         </Scripts>
       </Frame>
 
@@ -258,7 +229,13 @@
               </Anchor>
             </Anchors>
             <Scripts>
-              <OnLoad>_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 2); </OnLoad>
+              <OnLoad><!-- WOW_PROJECT_CLASSIC=2    WOW_PROJECT_BURNING_CRUSADE_CLASSIC=5   -->
+				if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 2); 
+				else
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 12); 
+				end
+			  </OnLoad>
               <OnClick>Atr_SetDurationOptionRB (self:GetName()); </OnClick>
             </Scripts>
           </CheckButton>
@@ -271,7 +248,13 @@
               </Anchor>
             </Anchors>
             <Scripts>
-              <OnLoad>_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 8); </OnLoad>
+              <OnLoad>
+				if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 8); 
+				else
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 24); 
+				end
+			  </OnLoad>
               <OnClick>Atr_SetDurationOptionRB (self:GetName()); </OnClick>
             </Scripts>
           </CheckButton>
@@ -284,7 +267,13 @@
               </Anchor>
             </Anchors>
             <Scripts>
-              <OnLoad>_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 24); </OnLoad>
+              <OnLoad>
+				if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 24); 
+				else
+					_G[self:GetName().."Text"]:SetFormattedText(FORMATED_HOURS, 48); 
+				end
+			  </OnLoad>
               <OnClick>Atr_SetDurationOptionRB (self:GetName()); </OnClick>
             </Scripts>
           </CheckButton>
@@ -345,14 +334,14 @@
         <FontString inherits="GameFontNormal" text="When SHIFT is down show">
           <Anchors>
             <Anchor point="TOPLEFT">
-              <Offset x="20" y="-200"/>
+              <Offset x="20" y="-181"/>
             </Anchor>
           </Anchors>
         </FontString>
         <FontString inherits="GameFontNormal" text="Show disenchanting details">
           <Anchors>
             <Anchor point="TOPLEFT">
-              <Offset x="20" y="-260"/>
+              <Offset x="20" y="-251"/>
             </Anchor>
           </Anchors>
         </FontString>
@@ -386,7 +375,7 @@
         </Scripts>
       </Frame>
 
-      <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsAuctionWeekOpt">
+      <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsDisenchantOpt">
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
@@ -395,50 +384,10 @@
           </Anchor>
         </Anchors>
         <Scripts>
-          <OnLoad>ATR_tipsAuctionWeekOpt_CB_Text:SetText (gAtr_ZT("Show auction house week summary in tooltips"));  </OnLoad>
-        </Scripts>
-      </Frame>
-
-      <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsAuctionMonthOpt">
-        <Anchors>
-          <Anchor point="TOPLEFT">
-            <Offset>
-              <AbsDimension x="20" y="-145"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnLoad>ATR_tipsAuctionMonthOpt_CB_Text:SetText (gAtr_ZT("Show auction house month summary in tooltips"));  </OnLoad>
-        </Scripts>
-      </Frame>
-
-      <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsDisenchantOpt">
-        <Anchors>
-          <Anchor point="TOPLEFT">
-            <Offset>
-              <AbsDimension x="20" y="-170"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
           <OnLoad>ATR_tipsDisenchantOpt_CB_Text:SetText (gAtr_ZT("Show disenchant prices in tooltips"));  </OnLoad>
         </Scripts>
       </Frame>
 
-      <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsReagentOpt">
-        <Anchors>
-          <Anchor point="TOPLEFT">
-            <Offset>
-              <AbsDimension x="20" y="-310"/>
-            </Offset>
-          </Anchor>
-        </Anchors>
-        <Scripts>
-          <OnLoad>ATR_tipsReagentOpt_CB_Text:SetText (gAtr_ZT("Show reagent prices in tradeskill tooltips"));  </OnLoad>
-        </Scripts>
-      </Frame>
-
-<!--
       <Frame inherits="Atr_SingleOptionTemplate" name="ATR_tipsMailboxOpt">
         <Anchors>
           <Anchor point="TOPLEFT">
@@ -451,13 +400,12 @@
           <OnLoad>ATR_tipsMailboxOpt_CB_Text:SetText (gAtr_ZT("Show auction house prices in mailbox tooltips"));  </OnLoad>
         </Scripts>
       </Frame>
- -->
 
       <Frame inherits="UIDropDownMenuTemplate" name="Atr_tipsShiftDD">
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
-              <AbsDimension x="50" y="-215"/>
+              <AbsDimension x="50" y="-197"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -470,7 +418,7 @@
         <Anchors>
           <Anchor point="TOPLEFT">
             <Offset>
-              <AbsDimension x="50" y="-275"/>
+              <AbsDimension x="50" y="-267"/>
             </Offset>
           </Anchor>
         </Anchors>
@@ -674,18 +622,14 @@
             </Offset>
           </Anchor>
         </Anchors>
-        <Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
-          <EdgeSize>
-            <AbsValue val="16"/>
-          </EdgeSize>
-        </Backdrop>
         <Scripts>
-          <OnShow>
+          <OnLoad>
             self:SetBackdrop({
-              edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", 
+              edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+              tileEdge = true,
               edgeSize = 16,
             })
-          </OnShow>
+          </OnLoad>
         </Scripts>
       </Frame>
       <Button inherits="Atr_SmallButtonTemplate" name="$parent_Edit" parent="Atr_StackingOptionsFrame" text="EDIT">
@@ -720,7 +664,7 @@
       </Button>
     </Frames>
   </Frame>
-  <Button hidden="true" name="Atr_StackingEntryTemplate" virtual="true" inherits="BackdropTemplate">
+  <Button hidden="true" name="Atr_StackingEntryTemplate" virtual="true">
     <Size>
       <AbsDimension y="16"/>
     </Size>
@@ -783,7 +727,7 @@
     </Scripts>
   </Button>
   <!-- Memorize Stacking screen -->
-  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_MemorizeFrame" parent="InterfaceOptionsFrame" toplevel="true">
+  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_MemorizeFrame" parent="InterfaceOptionsFrame" toplevel="true" inherits="BackdropTemplate">
     <Size>
       <AbsDimension x="430" y="250"/>
     </Size>
@@ -794,29 +738,6 @@
         </Offset>
       </Anchor>
     </Anchors>
-    <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-      <BackgroundInsets>
-        <AbsInset bottom="11" left="11" right="12" top="12"/>
-      </BackgroundInsets>
-      <TileSize>
-        <AbsValue val="32"/>
-      </TileSize>
-      <EdgeSize>
-        <AbsValue val="32"/>
-      </EdgeSize>
-    </Backdrop>
-    <Scripts>
-      <OnShow>
-        self:SetBackdrop({
-          bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
-          edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", 
-          tile = true,
-          tileSize = 32,
-          edgeSize = 32,
-          insets = { left = 11, right = 12, top = 12, bottom = 11, },
-        })
-      </OnShow>
-    </Scripts>
     <Layers>
       <Layer level="BACKGROUND">
         <FontString inherits="GameFontNormalSmall" justifyH="LEFT" name="Atr_Mem_itemName_text" text="AUCTIONATOR_ITEM_NAME">
@@ -854,6 +775,17 @@
       </Layer>
     </Layers>
     <Scripts>
+      <OnLoad>
+        self:SetBackdrop({
+        bgFile = "Interface\\CharacterFrame\\UI-Party-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile=true,
+        tileEdge = true,
+        tileSize = 32,
+        edgeSize = 32,
+        insets = {bottom = 11, left = 11, right = 12, top = 12},
+        })
+      </OnLoad>
       <OnHide>HideInterfaceOptionsMask()</OnHide>
     </Scripts>
     <Frames>
@@ -1133,7 +1065,7 @@
     </Frames>
   </Frame>
   <!-- Are You Sure? screen -->
-  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_ConfirmClear_Frame" parent="InterfaceOptionsFrame" toplevel="true">
+  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_ConfirmClear_Frame" parent="InterfaceOptionsFrame" toplevel="true" inherits="BackdropTemplate">
     <Size x="430" y="200"/>
     <Anchors>
       <Anchor point="CENTER">
@@ -1142,28 +1074,17 @@
         </Offset>
       </Anchor>
     </Anchors>
-    <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-      <BackgroundInsets>
-        <AbsInset bottom="11" left="11" right="12" top="12"/>
-      </BackgroundInsets>
-      <TileSize>
-        <AbsValue val="32"/>
-      </TileSize>
-      <EdgeSize>
-        <AbsValue val="32"/>
-      </EdgeSize>
-    </Backdrop>
     <Scripts>
-      <OnShow>
+      <OnLoad>
         self:SetBackdrop({
-          bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
-          edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", 
-          tile = true,
-          tileSize = 32,
-          edgeSize = 32,
-          insets = { left = 11, right = 12, top = 12, bottom = 11, },
+        bgFile="Interface\\CharacterFrame\\UI-Party-Background",
+        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile=true,
+        tileEdge = true,
+        tileSize = 32,
+        edgeSize = 32,
         })
-      </OnShow>
+      </OnLoad>
     </Scripts>
     <Layers>
       <Layer level="BACKGROUND">
@@ -1260,18 +1181,14 @@
             <Offset x="27" y="-5"/>
           </Anchor>
         </Anchors>
-        <Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
-          <EdgeSize>
-            <AbsValue val="16"/>
-          </EdgeSize>
-        </Backdrop>
         <Scripts>
-          <OnShow>
+          <OnLoad>
             self:SetBackdrop({
-              edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", 
-              edgeSize = 16,
+            edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+            tileEdge = true,
+            edgeSize = 16,
             })
-          </OnShow>
+          </OnLoad>
         </Scripts>
       </Frame>
       <Button inherits="UIPanelButtonTemplate" name="Atr_ShpList_DeleteButton" text="Delete">
@@ -1385,33 +1302,21 @@
       <OnDoubleClick function="Atr_ShpListsEntry_OnDoubleClick"/>
     </Scripts>
   </Button>
-  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_ShpList_Edit_Frame">
+  <Frame enableMouse="true" frameStrata="DIALOG" hidden="true" name="Atr_ShpList_Edit_Frame" inherits="BackdropTemplate">
     <Size x="430" y="415"/>
     <Anchors>
       <Anchor point="CENTER"/>
     </Anchors>
-    <Backdrop bgFile="Interface\MERCHANTFRAME\UI-BuyBack-TopLeft" edgeFile="Interface\DialogFrame\UI-DialogBox-Border">
-      <BackgroundInsets>
-        <AbsInset bottom="2" left="2" right="0" top="2"/>
-      </BackgroundInsets>
-      <TileSize>
-        <AbsValue val="256"/>
-      </TileSize>
-      <EdgeSize>
-        <AbsValue val="32"/>
-      </EdgeSize>
-    </Backdrop>
     <Scripts>
-      <OnShow>
+      <OnLoad>
         self:SetBackdrop({
-          bgFile = "Interface\\MERCHANTFRAME\\UI-BuyBack-TopLeft", 
-          edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", 
-          tile = true,
-          tileSize = 256,
-          edgeSize = 32,
-          insets = { left = 2, right = 0, top = 2, bottom = 2, },
+        bgFile="Interface\\MERCHANTFRAME\\UI-BuyBack-TopLeft",
+        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+        tileEdge = true,
+        edgeSize = 32,
+        insets = {bottom = 2, left = 2, right = 0, top = 2},
         })
-      </OnShow>
+      </OnLoad>
     </Scripts>
     <Layers>
       <Layer level="BACKGROUND">
@@ -1429,6 +1334,26 @@
       </Layer>
     </Layers>
     <Frames>
+      <Frame inherits="BackdropTemplate">
+        <Size x="200"/>
+        <Anchors>
+          <Anchor point="TOPLEFT">
+            <Offset x="30" y="-62"/>
+          </Anchor>
+          <Anchor point="BOTTOM">
+            <Offset y="31"/>
+          </Anchor>
+        </Anchors>
+        <Scripts>
+          <OnLoad>
+            self:SetBackdrop({
+            bgFile="Interface\\CharacterFrame\\UI-Party-Background",
+            tile=true,
+            tileSize=32
+            })
+          </OnLoad>
+        </Scripts>
+      </Frame>
       <ScrollFrame inherits="UIPanelScrollFrameTemplate" name="$parentScrollFrame">
         <Size x="180"/>
         <Anchors>
@@ -1439,24 +1364,6 @@
             <Offset y="31"/>
           </Anchor>
         </Anchors>
-        <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" tile="true">
-          <BackgroundInsets>
-            <AbsInset bottom="-3" left="-20" right="-23" top="-3"/>
-          </BackgroundInsets>
-          <TileSize>
-            <AbsValue val="32"/>
-          </TileSize>
-        </Backdrop>
-        <Scripts>
-          <OnShow>
-            self:SetBackdrop({
-              bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
-              tile = true,
-              tileSize = 32,
-              insets = { left = -20, right = -23, top = -3, bottom = -3, },
-            })
-          </OnShow>
-        </Scripts>
         <Layers>
           <Layer level="ARTWORK">
             <Texture file="Interface\PaperDollInfoFrame\UI-Character-ScrollBar">
@@ -1539,33 +1446,23 @@
       </Button>
     </Frames>
   </Frame>
-  <Frame enableMouse="true" frameStrata="FULLSCREEN_DIALOG" hidden="true" name="Atr_SList_Conflict_Frame" parent="UIParent">
+  <Frame enableMouse="true" frameStrata="FULLSCREEN_DIALOG" hidden="true" name="Atr_SList_Conflict_Frame" parent="UIParent" inherits="BackdropTemplate">
     <Size x="400" y="420"/>
     <Anchors>
       <Anchor point="CENTER"/>
     </Anchors>
-    <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-      <BackgroundInsets>
-        <AbsInset bottom="2" left="2" right="0" top="2"/>
-      </BackgroundInsets>
-      <TileSize>
-        <AbsValue val="32"/>
-      </TileSize>
-      <EdgeSize>
-        <AbsValue val="32"/>
-      </EdgeSize>
-    </Backdrop>
     <Scripts>
-      <OnShow>
+      <OnLoad>
         self:SetBackdrop({
-          bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
-          edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", 
-          tile = true,
-          tileSize = 32,
-          edgeSize = 32,
-          insets = { left = 2, right = 0, top = 2, bottom = 2, },
+        bgFile="Interface\\CharacterFrame\\UI-Party-Background",
+        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile=true,
+        tileEdge = true,
+        tileSize = 32,
+        edgeSize = 32,
+        insets = {bottom = 2, left = 2, right = 0, top = 2}
         })
-      </OnShow>
+      </OnLoad>
     </Scripts>
     <Layers>
       <Layer level="BACKGROUND">

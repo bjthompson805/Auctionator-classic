@@ -83,8 +83,13 @@
             Atr_Search_Onclick()
             self:ClearFocus()
           </OnEnterPressed>
+          <OnCharComposition>
+            Atr_Item_Autocomplete(self)
+          </OnCharComposition>
           <OnChar>
-            Atr_Item_Autocomplete( self )
+            if ( not self:IsInIMECompositionMode() ) then
+              Atr_Item_Autocomplete( self )
+            end
           </OnChar>
           <OnEscapePressed>
             self:ClearFocus()
@@ -199,26 +204,22 @@
       <Frame name="Atr_Hlist" hidden="true" inherits="BackdropTemplate">
         <Size><AbsDimension x="170" y="335"/></Size>
         <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="-193" y="-75"/></Offset></Anchor></Anchors>
-        <Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" tile="true">
-          <BackgroundInsets><AbsInset left="0" right="-24" top="0" bottom="0"/></BackgroundInsets>
-          <TileSize><AbsValue val="256"/></TileSize>
-        </Backdrop>
         <Scripts>
-          <OnShow>
+          <OnLoad>
             self:SetBackdrop({
-              bgFile = "Interface\\CharacterFrame\\UI-Party-Background", 
-              tile = true,
-              tileSize = 256,
-              insets = { left = 0, right = -24, top = 0, bottom = 0, },
+              bgFile="Interface\\CharacterFrame\\UI-Party-Background",
+              tile=true,
+              tileSize=256,
+              insets = {left=0, right=-24, top=0, bottom=0},
             })
-          </OnShow>
+          </OnLoad>
         </Scripts>
         <Layers>
           <Layer level="ARTWORK">
             <Texture file="Interface\Tooltips\UI-Tooltip-Border">
               <Size><AbsDimension x="5"/></Size>
               <Anchors>
-                <Anchor point="TOPLEFT"><Offset><AbsDimension x="170" y="0"/></Offset></Anchor>
+                <Anchor point="TOPLEFT"><Offset><AbsDimension x="174" y="0"/></Offset></Anchor>
                 <Anchor point="BOTTOM"><Offset><AbsDimension y="0"/></Offset></Anchor>
               </Anchors>
               <TexCoords left="0.15" right="0.25" top="0" bottom="1"/>
@@ -234,7 +235,7 @@
           <Layer level="ARTWORK">
 
             <FontString inherits="GameFontHighlightSmall" text="CREATE_AUCTION">
-              <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="68" y="18"/></Offset></Anchor></Anchors>
+              <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="83" y="18"/></Offset></Anchor></Anchors>
             </FontString>
 
             <FontString name="Atr_StackPriceText" inherits="GameFontHighlightSmall" text="Buyout Price">
@@ -266,7 +267,7 @@
               <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="10" y="-270"/></Offset></Anchor></Anchors>
             </FontString>
 
-            <FontString name="Atr_Duration_Text" inherits="GameFontHighlightSmall" text="Duration">
+            <FontString name="Atr_Duration_Text" inherits="GameFontHighlightSmall" text="AUCTION_DURATION">
               <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="10" y="-304"/></Offset></Anchor></Anchors>
             </FontString>
 
@@ -561,11 +562,11 @@
 
             <FontString name="Atr_Col1_Heading" inherits="GameFontHighlightSmall" text="AUCTIONATOR_ITEM_PRICE" hidden="true" justifyH="CENTER">
               <Size><AbsDimension x="100"/></Size>
-              <Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="60" y="1"/></Offset></Anchor></Anchors>
+              <Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="40" y="1"/></Offset></Anchor></Anchors>
             </FontString>
 
             <FontString name="Atr_Col3_Heading" inherits="GameFontHighlightSmall" text="AUCTIONATOR_CURRENT_AUCTIONS" hidden="true">
-              <Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="170" y="1"/></Offset></Anchor></Anchors>
+              <Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="175" y="1"/></Offset></Anchor></Anchors>
             </FontString>
 
             <FontString name="Atr_Col4_Heading" inherits="GameFontHighlightSmall" text="TOTAL" hidden="true">
@@ -589,13 +590,13 @@
 
           <Button name="Atr_Col1_Heading_Button" text="AUCTIONATOR_LOWEST_PRICE" inherits="Atr_Col_Heading_Template"  hidden="true">
             <Size><AbsDimension x="100" y="20"/></Size>
-            <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="50" y="-21"/></Offset></Anchor></Anchors>
+            <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="46" y="-21"/></Offset></Anchor></Anchors>
             <Scripts><OnClick>Atr_Onclick_Col1()</OnClick></Scripts>
           </Button>
 
           <Button name="Atr_Col3_Heading_Button" text="AUCTIONATOR_ITEM_NAME" inherits="Atr_Col_Heading_Template"  hidden="true">
             <Size><AbsDimension x="108" y="20"/></Size>
-            <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="185" y="-21"/></Offset></Anchor></Anchors>
+            <Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="172" y="-21"/></Offset></Anchor></Anchors>
             <Scripts><OnClick>Atr_Onclick_Col3()</OnClick></Scripts>
           </Button>
 
@@ -640,19 +641,14 @@
           <Anchor point="TOPLEFT"><Offset><AbsDimension x="5" y="-72"/></Offset></Anchor>
           <Anchor point="RIGHT"><Offset><AbsDimension x="-5"/></Offset></Anchor>
         </Anchors>
-
-        <Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
-          <EdgeSize>
-            <AbsValue val="16"/>
-          </EdgeSize>
-        </Backdrop>
         <Scripts>
-          <OnShow>
+          <OnLoad>
             self:SetBackdrop({
-              edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", 
-              edgeSize = 16,
+              tileEdge = true,
+              edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+              edgeSize=16,
             })
-          </OnShow>
+          </OnLoad>
         </Scripts>
       </Frame>
 

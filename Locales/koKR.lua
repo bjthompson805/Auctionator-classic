@@ -1,4 +1,4 @@
-﻿function AtrBuildLTable_koKR ()
+function AtrBuildLTable_koKR ()
 
 -- Translated by Nfrog
 
