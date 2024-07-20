@@ -1574,7 +1574,6 @@ function Atr_CreateAuction_OnClick ()
   else
     gJustPosted.StackSize     = Atr_StackSize();
     gJustPosted.NumStacks     = Atr_Batch_NumAuctions:GetNumber();
-    gJustPosted.NumStacks     = 0; -- gepy
   end
 
   local duration        = UIDropDownMenu_GetSelectedValue(Atr_Duration);
@@ -4055,8 +4054,8 @@ function Atr_GetNumItemInBags (targItemLink)
 
         if (itemName == targItemName and isBattlePet == targIsBattlePet) then
 
-          local _, itemCount  = C_Container.GetContainerItemInfo(bagID, slotID)
-          if itemCount then numItems = numItems + itemCount; end
+          local info  = C_Container.GetContainerItemInfo(bagID, slotID)
+          if info then numItems = numItems + info.stackCount; end
         end
       end
     end
